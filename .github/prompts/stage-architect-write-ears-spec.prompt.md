@@ -2,7 +2,7 @@
 description: "Traduz regras de negócio confirmadas em requisitos em notação EARS para o sistema moderno."
 argument-hint: "rules=01-arqueologia/business-rules-catalog.md contexts=02-spec-moderna/bounded-contexts.md"
 agent: architect
-tools: ['search/codebase', 'edit/editFiles']
+tools: [execute, read, edit, com.microsoft/azure/search, todo]
 ---
 
 # /write-ears-spec

@@ -2,7 +2,7 @@
 description: "Checklist de self-review para segurança e problemas OWASP Top 10 em uma feature recém-construída."
 argument-hint: "context=payment files=PaymentController.java,PaymentService.java,Payment.java"
 agent: builder
-tools: ['search/codebase', 'edit/editFiles']
+tools: [execute, read, edit, com.microsoft/azure/search, todo]
 ---
 
 # /security-self-review
