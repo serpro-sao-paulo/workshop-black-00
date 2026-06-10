@@ -2,7 +2,7 @@
 description: "Extrai regras de negócio de um programa Natural lendo blocos IF/THEN/ELSE e confirmando com documentação."
 argument-hint: "file=01-arqueologia/legado-sifap/natural-programs/PGMAIN01.NSN docs=01-arqueologia/legado-sifap/legacy-docs/"
 agent: archaeologist
-tools: ['search/codebase', 'edit/editFiles']
+tools: [execute, read, edit, com.microsoft/azure/search, todo]
 ---
 
 # /extract-business-rules

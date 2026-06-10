@@ -2,7 +2,7 @@
 description: "Inicia o Estágio 1 — orienta a equipe sobre a pasta de legado e produz um inventário inicial."
 argument-hint: "path=01-arqueologia/legado-sifap/"
 agent: archaeologist
-tools: ['search/codebase', 'edit/editFiles']
+tools: [execute, read, edit, com.microsoft/azure/search, todo]
 ---
 
 # /archaeology-kickoff

@@ -2,7 +2,7 @@
 description: "Cataloga perguntas sem resposta encontradas durante a arqueologia — coisas que precisam de uma pessoa para resolver."
 argument-hint: "scope=01-arqueologia/"
 agent: archaeologist
-tools: ['search/codebase', 'edit/editFiles']
+tools: [execute, read, edit, com.microsoft/azure/search, todo]
 ---
 
 # /catalog-mysteries

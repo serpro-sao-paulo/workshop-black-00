@@ -2,7 +2,7 @@
 description: "Avalia as hipóteses de recorte do Estágio 1 e decide bounded contexts para o Modular Monolith."
 argument-hint: "report=01-arqueologia/discovery-report.md"
 agent: architect
-tools: ['search/codebase', 'edit/editFiles']
+tools: [execute, read, edit, com.microsoft/azure/search, todo]
 ---
 
 # /carve-bounded-contexts
