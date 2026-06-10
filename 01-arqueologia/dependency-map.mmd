@@ -1,0 +1,92 @@
+%% Mapa de Dependências — SIFAP Legado (15 programas .NSN + 4 DDMs Adabas)
+%% Gerado por @archaeologist /map-dependencies em 2026-06-10
+%% FATO CENTRAL: 0 CALLNAT e 0 INCLUDE em todo o código. Não há arestas programa->programa.
+%% O acoplamento é 100%% indireto, via arquivos Adabas compartilhados (stamp coupling).
+%% Toda aresta abaixo foi rastreada a partir do código-fonte (ver dependency-map.md para file:line).
+flowchart LR
+  %% ---------- Programas (retângulos) ----------
+  subgraph BATCH["Batch"]
+    BATCHPGT["BATCHPGT.NSN"]
+    BATCHCON["BATCHCON.NSN"]
+    BATCHREL["BATCHREL.NSN"]
+  end
+  subgraph CAD["Cadastro (online)"]
+    CADBENEF["CADBENEF.NSN"]
+    CADDEPEND["CADDEPEND.NSN"]
+    CADPROG["CADPROG.NSN"]
+  end
+  subgraph CALC["Cálculo (online)"]
+    CALCBENF["CALCBENF.NSN"]
+    CALCCORR["CALCCORR.NSN"]
+    CALCDSCT["CALCDSCT.NSN"]
+  end
+  subgraph CONSREL["Consulta / Relatório"]
+    CONSBENF["CONSBENF.NSN"]
+    RELPGT["RELPGT.NSN"]
+    RELAUDIT["RELAUDIT.NSN"]
+  end
+  subgraph VAL["Validação (isolados / órfãos)"]
+    VALBENEF["VALBENEF.NSN"]
+    VALDOCS["VALDOCS.NSN"]
+    VALELEG["VALELEG.NSN"]
+  end
+
+  %% ---------- Dados Adabas (cilindros) ----------
+  BENEF[("BENEFICIARIO<br/>FNR 150")]
+  PROG[("PROGRAMA-SOCIAL<br/>FNR 151")]
+  PAGTO[("PAGAMENTO<br/>FNR 152")]
+  AUDIT[("AUDITORIA<br/>FNR 153")]
+
+  %% ---------- Externos / quebrados ----------
+  CNAB[/"WORK FILE 1<br/>CNAB 240 (banco)"/]
+  MAPM(["MAP CONSBENF-M01<br/>(ausente)"])
+
+  %% ---------- Arestas programa -> dado ----------
+  BATCHPGT -->|READ| BENEF
+  BATCHPGT -->|"READ/FIND/STORE"| PAGTO
+  BATCHPGT -->|FIND| PROG
+
+  BATCHCON -->|"READ/STORE"| AUDIT
+  BATCHCON -->|"FIND/UPDATE"| PAGTO
+  BATCHCON -.->|READ| CNAB
+
+  BATCHREL -->|READ| PAGTO
+  BATCHREL -->|FIND| BENEF
+
+  CADBENEF -->|"FIND/STORE/UPDATE"| BENEF
+  CADDEPEND -->|"FIND/UPDATE"| BENEF
+  CADPROG -->|"FIND/STORE"| PROG
+
+  CALCBENF -->|FIND| BENEF
+  CALCBENF -->|FIND| PROG
+  CALCBENF -->|STORE| PAGTO
+
+  CALCCORR -->|"READ/UPDATE"| PAGTO
+
+  CALCDSCT -->|"FIND/UPDATE"| PAGTO
+  CALCDSCT -->|FIND| BENEF
+
+  CONSBENF -->|FIND| BENEF
+  CONSBENF -->|READ| PAGTO
+  CONSBENF -.->|"INPUT USING (ausente)"| MAPM
+
+  RELPGT -->|READ| PAGTO
+  RELPGT -->|FIND| BENEF
+
+  RELAUDIT -->|READ| AUDIT
+
+  VALELEG -->|FIND| BENEF
+  VALELEG -->|FIND| PROG
+
+  %% VALBENEF e VALDOCS: nenhum acesso a dados (VIEW declarada mas nunca usada) e nenhum chamador.
+
+  %% ---------- Estilo (paleta solicitada) ----------
+  classDef prog fill:#0f172a,stroke:#334155,color:#e2e8f0;
+  classDef data fill:#0f172a,stroke:#334155,color:#e2e8f0;
+  classDef ext fill:#0f172a,stroke:#b45309,color:#e2e8f0;
+  classDef orphan fill:#0f172a,stroke:#7f1d1d,color:#e2e8f0;
+
+  class BATCHPGT,BATCHCON,BATCHREL,CADBENEF,CADDEPEND,CADPROG,CALCBENF,CALCCORR,CALCDSCT,CONSBENF,RELPGT,RELAUDIT prog;
+  class VALBENEF,VALDOCS,VALELEG orphan;
+  class BENEF,PROG,PAGTO,AUDIT data;
+  class CNAB,MAPM ext;
