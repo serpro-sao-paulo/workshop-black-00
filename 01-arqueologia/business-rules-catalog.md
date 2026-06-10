@@ -142,6 +142,45 @@ O que NÃO conta: paginação de relatório, formatação de saída, manipulaç�
 
 ---
 
+## Regras de CALCDSCT.NSN
+
+> **Programa:** [`legado-sifap/natural-programs/CALCDSCT.NSN`](legado-sifap/natural-programs/CALCDSCT.NSN) (203 linhas) — cálculo de descontos e deduções compulsórias sobre o benefício (online).
+> **Lido por:** `@archaeologist` (`/extract-business-rules`) em 2026-06-10, bloco a bloco.
+> **Doc cruzada:** [`legacy-docs/REGRAS-NEGOCIO-2012.md`](legado-sifap/legacy-docs/REGRAS-NEGOCIO-2012.md), seções RN-021/022/023.
+> **Achado que fecha lacuna:** RN-021 (nota) e a seção 6 do doc registravam a exceção judicial ao teto de 30% como "mencionada, mas **não confirmada no código** (CALCDSCT tinha acesso restrito)". A leitura **confirma** a exceção em [#L165-L169](legado-sifap/natural-programs/CALCDSCT.NSN#L165). Lacuna documental fechada (ver CD-08).
+
+| # | Declaração da Regra | Candidato EARS | Fonte | Classificação | Notas |
+|---|---|---|---|---|---|
+| CD-01 | Ao buscar o pagamento informado, se o CPF do pagamento corresponder ao CPF informado, o sistema deve marcá-lo como localizado e capturar valor bruto e competência. | Event-driven | [CALCDSCT.NSN#L75-L79](legado-sifap/natural-programs/CALCDSCT.NSN#L75) | Inferida | Validação de consistência pagamento↔CPF. Sem suporte documental direto. |
+| CD-02 | Se o pagamento informado não for encontrado, o sistema deve exibir "PAGAMENTO NAO ENCONTRADO" e encerrar sem calcular descontos. | Unwanted | [CALCDSCT.NSN#L82-L85](legado-sifap/natural-programs/CALCDSCT.NSN#L82) | Inferida | `ESCAPE ROUTINE`. Tratamento de erro. |
+| CD-03 | Se o beneficiário do CPF informado não existir, o sistema deve exibir "BENEFICIARIO NAO ENCONTRADO" e encerrar. | Unwanted | [CALCDSCT.NSN#L91-L94](legado-sifap/natural-programs/CALCDSCT.NSN#L91) | Inferida | `ESCAPE ROUTINE`. Tratamento de erro. |
+| CD-04 | O sistema deve sempre aplicar uma contribuição social obrigatória, com alíquota progressiva pela primeira faixa de bruto cujo limite seja ≥ ao valor bruto (500→3%, 1000→5%, 2000→7%, 9999,99→9%). | Ubiquitous | [CALCDSCT.NSN#L99](legado-sifap/natural-programs/CALCDSCT.NSN#L99), [#L58-L65](legado-sifap/natural-programs/CALCDSCT.NSN#L58), [#L192-L201](legado-sifap/natural-programs/CALCDSCT.NSN#L192) | Mistério | <!-- mystery: a existência da contribuição casa com RN-022 (tipo 03, previdenciária), mas as alíquotas progressivas 3/5/7/9% e os limites de faixa NÃO constam em nenhuma seção do doc. Origem das alíquotas desconhecida --> |
+| CD-05 | O sistema deve limitar o total de descontos a 30% do valor bruto do benefício. | State-driven | [CALCDSCT.NSN#L102-L105](legado-sifap/natural-programs/CALCDSCT.NSN#L102), [#L165-L169](legado-sifap/natural-programs/CALCDSCT.NSN#L165) | Confirmada | Casa exatamente com RN-021 (teto de 30% do bruto). |
+| CD-06 | Ao processar cada desconto cadastrado, se o desconto estiver fora da vigência (encerrado antes de hoje, ou ainda não iniciado), o sistema deve ignorá-lo. | Event-driven | [CALCDSCT.NSN#L112-L118](legado-sifap/natural-programs/CALCDSCT.NSN#L112) | Inferida | Dois `ESCAPE TOP` por `DT-FIM-DSCT`/`DT-INICIO-DSCT`. Regra de vigência não documentada em RN-021/022/023. |
+| CD-07 | Para cada desconto cadastrado, o sistema deve calcular o valor conforme o tipo: judicial/pensão/administrativo → valor fixo se informado, senão percentual do bruto; imposto → percentual do bruto; sindical → 1% fixo do bruto. | Event-driven | [CALCDSCT.NSN#L122-L162](legado-sifap/natural-programs/CALCDSCT.NSN#L122) | Mistério | <!-- mystery: os tipos no código são LETRAS (J/I/S/P/A/C) mas RN-022 documenta CÓDIGOS NUMÉRICOS (01-05). Não há mapeamento entre os dois esquemas. Além disso, o sindical de 1% (magic 0.01) não consta no doc --> |
+| CD-08 | Ao aplicar o teto de 30%, o sistema não deve limitar descontos do tipo judicial (`'J'`) — retenções judiciais podem ultrapassar 30%. | State-driven | [CALCDSCT.NSN#L131-L132](legado-sifap/natural-programs/CALCDSCT.NSN#L131), [#L165-L169](legado-sifap/natural-programs/CALCDSCT.NSN#L165) | Confirmada | **Fecha lacuna:** RN-021 (nota) e seção 6 listavam a exceção judicial como não confirmada no código. Confirmada aqui: o teto só se aplica quando `#TIPO-DSCT NE 'J'`. |
+| CD-09 | Após calcular o total de descontos, o sistema deve persistir o valor no campo de desconto do pagamento (UPDATE). | Event-driven | [CALCDSCT.NSN#L179-L183](legado-sifap/natural-programs/CALCDSCT.NSN#L179) | Inferida | `FIND PAGAMENTO-V` + `UPDATE` + `END TRANSACTION`. |
+| CD-10 | O sistema deve truncar (não arredondar) os valores de desconto para 2 casas decimais. | Ubiquitous | [CALCDSCT.NSN#L104-L105](legado-sifap/natural-programs/CALCDSCT.NSN#L104), [#L174-L176](legado-sifap/natural-programs/CALCDSCT.NSN#L174) | Confirmada | Mesmo padrão de truncamento (×100 // /100) de RN-014. |
+
+### Rascunho EARS (regras confirmadas)
+
+- **REQ (CD-05):** O sistema **deverá** limitar o total de descontos aplicados a um benefício a, no máximo, 30% do seu valor bruto.
+- **REQ (CD-08):** _Onde_ o desconto for do tipo judicial (`'J'`), o sistema **deverá** permitir que o desconto ultrapasse o teto de 30% do valor bruto.
+- **REQ (CD-10):** _Quando_ o sistema calcula valores de desconto, ele **deverá** truncar (não arredondar) o resultado para 2 casas decimais.
+
+### Confronto com BATCHPGT (mistério M-BP-05 do batch)
+
+- O `CALCDSCT` aplica **teto de 30% com tipos diferenciados e exceção judicial** (CD-05/CD-07/CD-08), enquanto o `BATCHPGT` aplica **3% fixo acima de R$ 500** inline (BP-13). **São algoritmos de desconto incompatíveis.** Como o ciclo mensal usa o cálculo inline do batch (não há `CALLNAT` para CALCDSCT — ver M-BP-01), o desconto efetivo no pagamento mensal **não passa** por esta lógica. O `CALCDSCT` parece ser acionado apenas no fluxo online/avulso. → item de alta prioridade para `/catalog-mysteries` e para decisão de spec.
+
+### Discrepâncias código × documentação (para `/catalog-mysteries`)
+
+- **M-CD-01** — Tipos de desconto no código são letras (`J/I/S/P/A/C`); RN-022 documenta códigos numéricos (`01-05`). Sem mapeamento conhecido.
+- **M-CD-02** — RN-023 descreve descarte por prioridade numérica ao atingir 30%; o código processa na ordem do grupo PE e aplica o teto cumulativo por item, sem descarte por prioridade.
+- **M-CD-03** — Alíquotas da contribuição social progressiva (3/5/7/9%) e seus limites de faixa não constam no doc.
+- **M-CD-04** — O tipo `'C'` (contribuição) é tratado por sub-rotina separada (`CALC-CONTRIB-SOCIAL`) e somado **antes** do laço de teto; a interação entre a contribuição e o teto de 30% não é explícita.
+
+---
+
 ### Continuar a leitura
 
 <table width="100%">
